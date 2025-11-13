@@ -1,9 +1,9 @@
-name: CI/CD TP8 - Front/Back + QA
+name: CI/CD TP8 - Front/Back + QA + PROD
 
 on:
   push:
-    branches: [ main ]
-  workflow_dispatch:
+    branches: [ main ]  # QA automático
+  workflow_dispatch:      # Permite correr PROD manual
 
 env:
   REGISTRY: ghcr.io
@@ -11,7 +11,10 @@ env:
   IMAGE_FRONTEND: ghcr.io/soficuozzo/tp8-frontend
 
 jobs:
-  build-and-push:
+  # ============================
+  #    QA AUTOMÁTICO
+  # ============================
+  build-and-push-qa:
     runs-on: ubuntu-latest
 
     steps:
@@ -25,28 +28,23 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GHCR_TOKEN }}
 
-      # ========= BACKEND =========
+      # ========= BACKEND QA =========
       - name: Build backend QA image
-        run: |
-          docker build \
-            -t $IMAGE_BACKEND:qa \
-            ./backend
+        run: docker build -t $IMAGE_BACKEND:qa ./backend
 
       - name: Push backend QA image
         run: docker push $IMAGE_BACKEND:qa
 
-      # ========= FRONTEND =========
+      # ========= FRONTEND QA =========
       - name: Build frontend QA image
-        run: |
-          docker build \
-            -t $IMAGE_FRONTEND:qa \
-            ./frontend
+        run: docker build -t $IMAGE_FRONTEND:qa ./frontend
 
       - name: Push frontend QA image
         run: docker push $IMAGE_FRONTEND:qa
 
+
   deploy-qa:
-    needs: build-and-push
+    needs: build-and-push-qa
     runs-on: ubuntu-latest
 
     steps:
@@ -55,3 +53,49 @@ jobs:
 
       - name: Trigger Render frontend QA deploy
         run: curl -X POST "${{ secrets.RENDER_WEBHOOK_FRONT_QA }}"
+
+
+  # ============================
+  #    PROD MANUAL
+  # ============================
+  build-and-push-prod:
+    runs-on: ubuntu-latest
+    if: github.event_name == 'workflow_dispatch'   # SOLO MANUAL
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GHCR_TOKEN }}
+
+      # ========= BACKEND PROD =========
+      - name: Build backend PROD image
+        run: docker build -t $IMAGE_BACKEND:prod ./backend
+
+      - name: Push backend PROD image
+        run: docker push $IMAGE_BACKEND:prod
+
+      # ========= FRONTEND PROD =========
+      - name: Build frontend PROD image
+        run: docker build -t $IMAGE_FRONTEND:prod ./frontend
+
+      - name: Push frontend PROD image
+        run: docker push $IMAGE_FRONTEND:prod
+
+
+  deploy-prod:
+    needs: build-and-push-prod
+    runs-on: ubuntu-latest
+    if: github.event_name == 'workflow_dispatch'   # SOLO MANUAL
+
+    steps:
+      - name: Trigger Render backend PROD deploy
+        run: curl -X POST "${{ secrets.RENDER_WEBHOOK_BACK_PROD }}"
+
+      - name: Trigger Render frontend PROD deploy
+        run: curl -X POST "${{ secrets.RENDER_WEBHOOK_FRONT_PROD }}"
