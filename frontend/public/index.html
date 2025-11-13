@@ -265,26 +265,26 @@
 <script>
     // ========== CONFIGURACIÓN DE API ==========
     function getApiUrl() {
-        const hostname = window.location.hostname;
-        
-        // Desarrollo local
-        if (hostname === 'localhost' || hostname === '127.0.0.1') {
-            return 'http://localhost:8080/api/tasks';
-        }
-        
-        // Azure QA
-        if (hostname.includes('apptp05-frontendqa')) {
-            return 'https://apptp5-backendqa.azurewebsites.net/api/tasks';
-        }
-        
-        // Azure PROD
-        if (hostname.includes('apptp05-frontendprod')) {
-            return 'https://apptp05-backendprod.azurewebsites.net/api/tasks';
-        }
-        
-        // Fallback
+    const hostname = window.location.hostname;
+
+    // Desarrollo local
+    if (hostname === 'localhost' || hostname === '127.0.0.1') {
         return 'http://localhost:8080/api/tasks';
     }
+
+    // Render QA
+    if (hostname.includes('tp8-frontend-qa')) {
+        return 'https://tp8-backend-qa-4u5j.onrender.com/api/tasks';
+    }
+
+    // Render PROD (luego lo ajustamos)
+    if (hostname.includes('tp8-frontend-prod')) {
+        return 'https://tp8-backend-prod.onrender.com/api/tasks';
+    }
+
+    return 'http://localhost:8080/api/tasks';
+}
+
     
     const API_URL = getApiUrl();
     console.log('🔗 API URL:', API_URL);
