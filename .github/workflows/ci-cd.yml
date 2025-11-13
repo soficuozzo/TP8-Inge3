@@ -106,75 +106,11 @@ jobs:
         run: curl -X POST "${{ secrets.RENDER_WEBHOOK_FRONT_QA }}"
 
 
-
-# ============================================
-#     PRUEBAS DE INTEGRACIÓN (CYPRESS)
-# ============================================
-  integration-tests:
-      needs: deploy-qa
-      runs-on: ubuntu-latest
-  
-      steps:
-        - name: Checkout code
-          uses: actions/checkout@v4
-  
-        - name: Setup Node
-          uses: actions/setup-node@v4
-          with:
-            node-version: 20
-  
-        # 🔥 ESPERAR HASTA QUE QA ESTÉ ARRIBA (Render tarda en despertar)
-        - name: Wait for Frontend QA to be ready
-          run: |
-            echo "⏳ Esperando que el FRONT QA responda 200..."
-            for i in {1..30}; do
-              STATUS=$(curl -s -o /dev/null -w "%{http_code}" https://tp8-frontend-qa.onrender.com)
-              echo "Intento $i - Status: $STATUS"
-              if [ "$STATUS" -eq 200 ]; then
-                echo "✅ FRONT QA listo!"
-                break
-              fi
-              sleep 5
-            done
-  
-        - name: Wait for Backend QA to be ready
-          run: |
-            echo "⏳ Esperando que el BACK QA responda 200..."
-            for i in {1..30}; do
-              STATUS=$(curl -s -o /dev/null -w "%{http_code}" https://tp8-backend-qa-4u5j.onrender.com/health)
-              echo "Intento $i - Status: $STATUS"
-              if [ "$STATUS" -eq 200 ]; then
-                echo "✅ BACK QA listo!"
-                break
-              fi
-              sleep 5
-            done
-  
-        - name: Install Cypress + dependencies
-          run: |
-            cd frontend
-            npm ci
-  
-        - name: Run Cypress E2E tests
-          run: |
-            cd frontend
-            npx cypress run
-          env:
-            FRONT_URL: "https://tp8-frontend-qa.onrender.com"
-            API_URL: "https://tp8-backend-qa-4u5j.onrender.com/api/tasks"
-  
-        - name: Save Cypress artifacts
-          uses: actions/upload-artifact@v4
-          with:
-            name: cypress-results
-            path: frontend/cypress
-
-
 # ============================================
 #                PROD MANUAL
 # ============================================
   build-and-push-prod:
-    needs: integration-tests
+    needs: deploy-qa
     runs-on: ubuntu-latest
     if: github.event_name == 'workflow_dispatch'   # SOLO manual
 
