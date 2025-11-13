@@ -2,18 +2,18 @@ name: CI/CD TP8 - Front/Back + QA + PROD
 
 on:
   push:
-    branches: [ main ]  # QA automático
-  workflow_dispatch:      # Permite correr PROD manual
+    branches: [ main ]     # QA automático
+  workflow_dispatch:        # PROD manual
 
 env:
   REGISTRY: ghcr.io
   IMAGE_BACKEND: ghcr.io/soficuozzo/tp8-backend
   IMAGE_FRONTEND: ghcr.io/soficuozzo/tp8-frontend
 
+# ============================================
+#              QA AUTOMÁTICO
+# ============================================
 jobs:
-  # ============================
-  #    QA AUTOMÁTICO
-  # ============================
   build-and-push-qa:
     runs-on: ubuntu-latest
 
@@ -28,14 +28,14 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GHCR_TOKEN }}
 
-      # ========= BACKEND QA =========
+      # BACKEND QA
       - name: Build backend QA image
         run: docker build -t $IMAGE_BACKEND:qa ./backend
 
       - name: Push backend QA image
         run: docker push $IMAGE_BACKEND:qa
 
-      # ========= FRONTEND QA =========
+      # FRONTEND QA
       - name: Build frontend QA image
         run: docker build -t $IMAGE_FRONTEND:qa ./frontend
 
@@ -55,12 +55,12 @@ jobs:
         run: curl -X POST "${{ secrets.RENDER_WEBHOOK_FRONT_QA }}"
 
 
-  # ============================
-  #    PROD MANUAL
-  # ============================
+# ============================================
+#              PROD MANUAL
+# ============================================
   build-and-push-prod:
     runs-on: ubuntu-latest
-    if: github.event_name == 'workflow_dispatch'   # SOLO MANUAL
+    if: github.event_name == 'workflow_dispatch'    # SOLO manual
 
     steps:
       - name: Checkout repo
@@ -73,25 +73,26 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GHCR_TOKEN }}
 
-      # ========= BACKEND PROD =========
+      # BACKEND PROD
       - name: Build backend PROD image
         run: docker build -t $IMAGE_BACKEND:prod ./backend
 
       - name: Push backend PROD image
         run: docker push $IMAGE_BACKEND:prod
 
-      # ========= FRONTEND PROD =========
+      # FRONTEND PROD
       - name: Build frontend PROD image
         run: docker build -t $IMAGE_FRONTEND:prod ./frontend
 
       - name: Push frontend PROD image
         run: docker push $IMAGE_FRONTEND:prod
 
-
   deploy-prod:
     needs: build-and-push-prod
     runs-on: ubuntu-latest
-    if: github.event_name == 'workflow_dispatch'   # SOLO MANUAL
+    if: github.event_name == 'workflow_dispatch'
+    environment:
+      name: production          # ESTO CREA EL BOTÓN DE APROBACIÓN MANUAL
 
     steps:
       - name: Trigger Render backend PROD deploy
