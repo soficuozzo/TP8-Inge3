@@ -266,24 +266,25 @@
     // ========== CONFIGURACIÓN DE API =========
     function getApiUrl() {
         const hostname = window.location.hostname;
-
-        // Desarrollo local
+    // Local Development
         if (hostname === 'localhost' || hostname === '127.0.0.1') {
             return 'http://localhost:8080/api/tasks';
         }
 
-        // Render QA
+        // QA en Render
         if (hostname.includes('tp8-frontend-qa')) {
             return 'https://tp8-backend-qa-4u5j.onrender.com/api/tasks';
         }
 
-        // Render PROD (luego lo ajustamos)
+        // PROD en Render
         if (hostname.includes('tp8-frontend-prod')) {
-            return 'https://tp8-backend-prod.onrender.com/api/tasks';
+            return 'https://tp8-backend-prod-8pd2.onrender.com/api/tasks';
         }
 
+        // Fallback
         return 'http://localhost:8080/api/tasks';
 }
+
     
     const API_URL = getApiUrl();
     console.log('🔗 API URL:', API_URL);
