@@ -2,7 +2,7 @@ name: CI/CD TP8 - Front/Back + QA + PROD
 
 on:
   push:
-    branches: [ main ]     # QA automático
+    branches: [ main ]     # QA automática
   workflow_dispatch:        # PROD manual
 
 env:
@@ -11,10 +11,61 @@ env:
   IMAGE_FRONTEND: ghcr.io/soficuozzo/tp8-frontend
 
 # ============================================
-#              QA AUTOMÁTICO
+#                TESTS UNITARIOS
 # ============================================
 jobs:
+  run-tests:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      # ---------- BACKEND TESTS ----------
+      - name: Install backend dependencies
+        run: |
+          cd backend
+          npm ci
+
+      - name: Run backend tests
+        run: |
+          cd backend
+          npm test -- --coverage
+
+      - name: Upload backend test results
+        uses: actions/upload-artifact@v3
+        with:
+          name: backend-tests
+          path: backend/coverage
+
+      # ---------- FRONTEND TESTS ----------
+      - name: Install frontend dependencies
+        run: |
+          cd frontend
+          npm ci
+
+      - name: Run frontend tests
+        run: |
+          cd frontend
+          npm test -- --coverage
+
+      - name: Upload frontend test results
+        uses: actions/upload-artifact@v3
+        with:
+          name: frontend-tests
+          path: frontend/coverage
+
+
+# ============================================
+#                QA AUTOMÁTICO
+# ============================================
   build-and-push-qa:
+    needs: run-tests
     runs-on: ubuntu-latest
 
     steps:
@@ -28,14 +79,14 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GHCR_TOKEN }}
 
-      # BACKEND QA
+      # ---- BACKEND QA ----
       - name: Build backend QA image
         run: docker build -t $IMAGE_BACKEND:qa ./backend
 
       - name: Push backend QA image
         run: docker push $IMAGE_BACKEND:qa
 
-      # FRONTEND QA
+      # ---- FRONTEND QA ----
       - name: Build frontend QA image
         run: docker build -t $IMAGE_FRONTEND:qa ./frontend
 
@@ -56,11 +107,12 @@ jobs:
 
 
 # ============================================
-#              PROD MANUAL
+#                PROD MANUAL
 # ============================================
   build-and-push-prod:
+    needs: run-tests
     runs-on: ubuntu-latest
-    if: github.event_name == 'workflow_dispatch'    # SOLO manual
+    if: github.event_name == 'workflow_dispatch'   # SOLO manual
 
     steps:
       - name: Checkout repo
@@ -73,26 +125,27 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GHCR_TOKEN }}
 
-      # BACKEND PROD
+      # ---- BACKEND PROD ----
       - name: Build backend PROD image
         run: docker build -t $IMAGE_BACKEND:prod ./backend
 
       - name: Push backend PROD image
         run: docker push $IMAGE_BACKEND:prod
 
-      # FRONTEND PROD
+      # ---- FRONTEND PROD ----
       - name: Build frontend PROD image
         run: docker build -t $IMAGE_FRONTEND:prod ./frontend
 
       - name: Push frontend PROD image
         run: docker push $IMAGE_FRONTEND:prod
 
+
   deploy-prod:
     needs: build-and-push-prod
     runs-on: ubuntu-latest
     if: github.event_name == 'workflow_dispatch'
     environment:
-      name: production          # ESTO CREA EL BOTÓN DE APROBACIÓN MANUAL
+      name: production    # habilita aprobación manual
 
     steps:
       - name: Trigger Render backend PROD deploy
