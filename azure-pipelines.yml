@@ -1,0 +1,368 @@
+trigger:
+- main
+
+pool:
+  vmImage: 'ubuntu-latest'
+
+variables:
+  - group: 'VG-TP05'
+  - name: nodeVersion
+    value: '20.x'
+  - name: azureSubscription
+    value: 'azure-tp05-connection'
+  - name: resourceGroup
+    value: 'rg-tp05-ingsoft3-2025'
+  - name: webappBackQA
+    value: 'apptp5-backendqa'
+  - name: webappFrontQA
+    value: 'apptp05-frontendqa'
+  - name: webappBackPRD
+    value: 'apptp05-backendprod'
+  - name: webappFrontPRD
+    value: 'apptp05-frontendprod'
+  - name: healthPath
+    value: '/healthz'
+
+stages:
+# ============== TESTS ==============
+- stage: Tests
+  displayName: 'Ejecutar Tests Unitarios'
+  jobs:
+  - job: TestBackend
+    displayName: 'Backend Tests'
+    steps:
+    - task: NodeTool@0
+      inputs:
+        versionSpec: '$(nodeVersion)'
+
+    - task: SonarCloudPrepare@2
+      inputs:
+        SonarCloud: 'SonarCloud'
+        organization: 'soficuozzo'
+        scannerMode: 'CLI'
+        configMode: 'manual'
+        cliProjectKey: 'TP7-Cuozzo-Hernandez'
+        cliProjectName: 'TP7-Cuozzo-Hernandez'
+        extraProperties: |
+          sonar.sources=backend
+          sonar.exclusions=**/node_modules/**,**/__tests__/**,**/.env,**/.env.*,**/coverage/**
+          sonar.javascript.lcov.reportPaths=backend/coverage/lcov.info
+      displayName: 'Preparar análisis SonarCloud (Backend)'
+
+    - script: |
+        set -e
+        BACK_PKG=$(find "$(Build.SourcesDirectory)" -type f -path "*/backend/package.json" -print -quit || true)
+        [ -z "$BACK_PKG" ] && { echo "❌ No se encontró backend/package.json"; exit 1; }
+        BACKEND_DIR=$(dirname "$BACK_PKG")
+        echo "##vso[task.setvariable variable=BACKEND_DIR]$BACKEND_DIR"
+      displayName: 'Detectar backend'
+
+    - script: |
+        cd "$(BACKEND_DIR)"
+        npm ci
+        npm test
+      displayName: 'Backend: npm test'
+
+    - task: PublishTestResults@2
+      inputs:
+        testResultsFormat: 'JUnit'
+        testResultsFiles: '$(BACKEND_DIR)/coverage/junit.xml'
+        failTaskOnFailedTests: true
+      condition: always()
+
+    - task: PublishCodeCoverageResults@1
+      inputs:
+        codeCoverageTool: 'Cobertura'
+        summaryFileLocation: '$(BACKEND_DIR)/coverage/cobertura-coverage.xml'
+      condition: always()
+
+    - task: SonarCloudAnalyze@2
+      displayName: 'Analizar código SonarCloud (Backend)'
+
+    - task: SonarCloudPublish@2
+      displayName: 'Publicar resultados SonarCloud (Backend)'
+      inputs:
+        pollingTimeoutSec: '300'
+
+  - job: TestFrontend
+    displayName: 'Frontend Tests'
+    steps:
+    - task: NodeTool@0
+      inputs:
+        versionSpec: '$(nodeVersion)'
+
+    - task: SonarCloudPrepare@2
+      inputs:
+        SonarCloud: 'SonarCloud'
+        organization: 'soficuozzo'
+        scannerMode: 'CLI'
+        configMode: 'manual'
+        cliProjectKey: 'TP7-Cuozzo-Hernandez'
+        cliProjectName: 'TP7-Cuozzo-Hernandez'
+        extraProperties: |
+          sonar.sources=frontend
+          sonar.exclusions=**/node_modules/**,**/__tests__/**,**/.env,**/.env.*,**/coverage/**
+          sonar.javascript.lcov.reportPaths=frontend/coverage/lcov.info
+      displayName: 'Preparar análisis SonarCloud (Frontend)'
+
+    - script: |
+        set -e
+        FRONT_PKG=$(find "$(Build.SourcesDirectory)" -type f -path "*/frontend/package.json" -print -quit || true)
+        [ -z "$FRONT_PKG" ] && { echo "❌ No se encontró frontend/package.json"; exit 1; }
+        FRONTEND_DIR=$(dirname "$FRONT_PKG")
+        echo "##vso[task.setvariable variable=FRONTEND_DIR]$FRONTEND_DIR"
+      displayName: 'Detectar frontend'
+
+    - script: |
+        cd "$(FRONTEND_DIR)"
+        npm ci
+        npm test
+      displayName: 'Frontend: npm test'
+
+    - task: PublishTestResults@2
+      inputs:
+        testResultsFormat: 'JUnit'
+        testResultsFiles: '$(FRONTEND_DIR)/coverage/junit.xml'
+        failTaskOnFailedTests: true
+      condition: always()
+
+    - task: SonarCloudAnalyze@2
+      displayName: 'Analizar código SonarCloud (Frontend)'
+
+    - task: SonarCloudPublish@2
+      displayName: 'Publicar resultados SonarCloud (Frontend)'
+      inputs:
+        pollingTimeoutSec: '300'
+
+# ============== BUILD ==============
+- stage: Build
+  displayName: 'Build + Empaquetar backend y frontend (Node 20)'
+  dependsOn: Tests
+  jobs:
+  - job: BuildAll
+    steps:
+    - checkout: self
+    - task: NodeTool@0
+      inputs:
+        versionSpec: '$(nodeVersion)'
+    - script: |
+        set -e
+        echo "Sources: $(Build.SourcesDirectory)"
+        BACK_PKG=$(find "$(Build.SourcesDirectory)" -type f -path "*/backend/package.json" -print -quit || true)
+        FRONT_PKG=$(find "$(Build.SourcesDirectory)" -type f -path "*/frontend/package.json" -print -quit || true)
+        [ -z "$BACK_PKG" ] && { echo "❌ No se encontró backend/package.json"; exit 1; }
+        [ -z "$FRONT_PKG" ] && { echo "❌ No se encontró frontend/package.json"; exit 1; }
+        BACKEND_DIR=$(dirname "$BACK_PKG")
+        FRONTEND_DIR=$(dirname "$FRONT_PKG")
+        echo "✅ Backend detectado: $BACKEND_DIR"
+        echo "✅ Frontend detectado: $FRONTEND_DIR"
+        echo "##vso[task.setvariable variable=BACKEND_DIR]$BACKEND_DIR"
+        echo "##vso[task.setvariable variable=FRONTEND_DIR]$FRONTEND_DIR"
+      displayName: 'Detectar rutas backend/frontend'
+    - script: |
+        set -e
+        cd "$(BACKEND_DIR)"
+        if ls *.go 1> /dev/null 2>&1; then
+          echo "❌ ERROR: Se encontraron archivos .go en backend/"
+          exit 1
+        fi
+        if [ ! -f "server.js" ]; then
+          echo "❌ ERROR: No se encontró server.js en backend/"
+          exit 1
+        fi
+        if ! grep -q '"start"' package.json; then
+          echo "❌ ERROR: package.json no tiene script 'start'"
+          exit 1
+        fi
+        echo "✅ Backend Node.js validado correctamente"
+      displayName: 'Validar backend Node.js'
+    - script: |
+        set -e
+        cd "$(BACKEND_DIR)"
+        echo "📦 Instalando dependencias de producción..."
+        npm ci --omit=dev
+        mkdir -p "$(Build.ArtifactStagingDirectory)"
+        BACK_ZIP="$(Build.ArtifactStagingDirectory)/backend.zip"
+        zip -r "$BACK_ZIP" . -x "*.git*" -x "*.env*" -x "*.log" -x "*.go" -x "go.mod" -x "go.sum"
+        echo "✅ Backend ZIP creado: $BACK_ZIP"
+      displayName: 'Backend: npm ci y empaquetar ZIP'
+    - script: |
+        set -e
+        cd "$(FRONTEND_DIR)"
+        echo "📦 Instalando dependencias del frontend..."
+        [ -f package.json ] && npm ci --omit=dev || echo "⚠️  No hay package.json en frontend"
+        mkdir -p "$(Build.ArtifactStagingDirectory)"
+        FRONT_ZIP="$(Build.ArtifactStagingDirectory)/frontend.zip"
+        zip -r "$FRONT_ZIP" . -x "*.git*" -x "*.env*" -x "*.log"
+        echo "✅ Frontend ZIP creado: $FRONT_ZIP"
+      displayName: 'Frontend: npm ci y empaquetar ZIP'
+    - task: PublishBuildArtifacts@1
+      inputs:
+        pathToPublish: '$(Build.ArtifactStagingDirectory)'
+        artifactName: 'drop'
+        publishLocation: 'Container'
+
+# ============ DEPLOY QA ============
+- stage: DeployQA
+  displayName: 'Deploy QA (Back + Front)'
+  dependsOn: Build
+  condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/main'))
+  jobs:
+  - deployment: QA
+    environment: 'QA'
+    strategy:
+      runOnce:
+        deploy:
+          steps:
+          # Backend QA - App Settings
+          - task: AzureCLI@2
+            displayName: 'Backend QA - App Settings'
+            inputs:
+              azureSubscription: '$(azureSubscription)'
+              scriptType: bash
+              scriptLocation: inlineScript
+              inlineScript: |
+                echo "⚙️  Configurando App Settings para Backend QA..."
+                az webapp config appsettings set -g "$(resourceGroup)" -n "$(webappBackQA)" --settings \
+                  MONGODB_URI="$(MONGODB_URI)" \
+                  DB_NAME="crudbasico_qa" \
+                  ALLOWED_ORIGINS="https://$(webappFrontQA).azurewebsites.net" \
+                  WEBSITE_HEALTHCHECK_PATH="$(healthPath)" \
+                  WEBSITE_NODE_DEFAULT_VERSION="~20" \
+                  PORT="8080" \
+                  WEBSITES_PORT="8080" \
+                  WEBSITE_RUN_FROM_PACKAGE="1" \
+                  SCM_DO_BUILD_DURING_DEPLOYMENT="false"
+                echo "✅ App Settings configurados"
+
+          # Backend QA - Deploy ZIP
+          - task: AzureWebApp@1
+            displayName: 'Deploy Backend QA (ZIP)'
+            inputs:
+              azureSubscription: '$(azureSubscription)'
+              appType: 'webAppLinux'
+              appName: '$(webappBackQA)'
+              package: '$(Pipeline.Workspace)/drop/backend.zip'
+              runtimeStack: 'NODE|20-lts'
+              startUpCommand: 'npm start'
+
+          # Frontend QA - App Settings
+          - task: AzureCLI@2
+            displayName: 'Frontend QA - App Settings'
+            inputs:
+              azureSubscription: '$(azureSubscription)'
+              scriptType: bash
+              scriptLocation: inlineScript
+              inlineScript: |
+                echo "⚙️  Configurando App Settings para Frontend QA..."
+                az webapp config appsettings set -g "$(resourceGroup)" -n "$(webappFrontQA)" --settings \
+                  API_BASE_URL="https://$(webappBackQA).azurewebsites.net" \
+                  WEBSITE_NODE_DEFAULT_VERSION="~20" \
+                  WEBSITE_RUN_FROM_PACKAGE="1" \
+                  SCM_DO_BUILD_DURING_DEPLOYMENT="false"
+                echo "✅ App Settings configurados"
+
+          # Frontend QA - Deploy ZIP
+          - task: AzureWebApp@1
+            displayName: 'Deploy Frontend QA (ZIP)'
+            inputs:
+              azureSubscription: '$(azureSubscription)'
+              appType: 'webAppLinux'
+              appName: '$(webappFrontQA)'
+              package: '$(Pipeline.Workspace)/drop/frontend.zip'
+              runtimeStack: 'NODE|20-lts'
+# ============== CYPRESS TESTS POST QA ==============
+- stage: IntegrationTests
+  displayName: 'Pruebas de Integración con Cypress (post QA)'
+  dependsOn: DeployQA
+  condition: succeeded()
+  jobs:
+  - job: CypressTests
+    displayName: 'Ejecución de pruebas E2E contra QA'
+    pool:
+      vmImage: 'ubuntu-latest'
+    steps:
+    - checkout: self
+    - task: NodeTool@0
+      inputs:
+        versionSpec: '$(nodeVersion)'
+    - script: |
+        cd frontend
+        npm ci
+        echo "🌐 URL Front QA: $FRONT_URL"
+        echo "🌐 URL API QA: $API_URL"
+        npx cypress run
+      displayName: 'Ejecutar Cypress sobre QA'
+      env:
+        FRONT_URL: 'https://$(webappFrontQA).azurewebsites.net'
+        API_URL: 'https://$(webappBackQA).azurewebsites.net/api/tasks'
+
+# =========== DEPLOY PROD ===========
+- stage: DeployPROD
+  displayName: 'Deploy PROD (aprobación)'
+  dependsOn: DeployQA
+  condition: succeeded()
+  jobs:
+  - deployment: PROD
+    environment: 'PROD'
+    strategy:
+      runOnce:
+        deploy:
+          steps:
+          # Backend PROD - App Settings
+          - task: AzureCLI@2
+            displayName: 'Backend PROD - App Settings'
+            inputs:
+              azureSubscription: '$(azureSubscription)'
+              scriptType: bash
+              scriptLocation: inlineScript
+              inlineScript: |
+                echo "⚙️  Configurando App Settings para Backend PROD..."
+                az webapp config appsettings set -g "$(resourceGroup)" -n "$(webappBackPRD)" --settings \
+                  MONGODB_URI="$(MONGODB_URI)" \
+                  DB_NAME="crudbasico_prod" \
+                  ALLOWED_ORIGINS="https://$(webappFrontPRD).azurewebsites.net" \
+                  WEBSITE_HEALTHCHECK_PATH="$(healthPath)" \
+                  WEBSITE_NODE_DEFAULT_VERSION="~20" \
+                  PORT="8080" \
+                  WEBSITES_PORT="8080" \
+                  WEBSITE_RUN_FROM_PACKAGE="1" \
+                  SCM_DO_BUILD_DURING_DEPLOYMENT="false"
+                echo "✅ App Settings configurados"
+
+          # Backend PROD - Deploy ZIP
+          - task: AzureWebApp@1
+            displayName: 'Deploy Backend PROD (ZIP)'
+            inputs:
+              azureSubscription: '$(azureSubscription)'
+              appType: 'webAppLinux'
+              appName: '$(webappBackPRD)'
+              package: '$(Pipeline.Workspace)/drop/backend.zip'
+              runtimeStack: 'NODE|20-lts'
+              startUpCommand: 'npm start'
+
+          # Frontend PROD - App Settings
+          - task: AzureCLI@2
+            displayName: 'Frontend PROD - App Settings'
+            inputs:
+              azureSubscription: '$(azureSubscription)'
+              scriptType: bash
+              scriptLocation: inlineScript
+              inlineScript: |
+                echo "⚙️  Configurando App Settings para Frontend PROD..."
+                az webapp config appsettings set -g "$(resourceGroup)" -n "$(webappFrontPRD)" --settings \
+                  API_BASE_URL="https://$(webappBackPRD).azurewebsites.net" \
+                  WEBSITE_NODE_DEFAULT_VERSION="~20" \
+                  WEBSITE_RUN_FROM_PACKAGE="1" \
+                  SCM_DO_BUILD_DURING_DEPLOYMENT="false"
+                echo "✅ App Settings configurados"
+
+          # Frontend PROD - Deploy ZIP
+          - task: AzureWebApp@1
+            displayName: 'Deploy Frontend PROD (ZIP)'
+            inputs:
+              azureSubscription: '$(azureSubscription)'
+              appType: 'webAppLinux'
+              appName: '$(webappFrontPRD)'
+              package: '$(Pipeline.Workspace)/drop/frontend.zip'
+              runtimeStack: 'NODE|20-lts'

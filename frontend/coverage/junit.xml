@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuites name="jest tests" tests="4" failures="0" errors="0" time="0.82">
+  <testsuite name="Frontend Server Tests" errors="0" failures="0" skipped="0" timestamp="2025-10-20T13:50:11" time="0.768" tests="4">
+    <testcase classname="Frontend Server Tests GET / should return HTML page (status 200)" name="Frontend Server Tests GET / should return HTML page (status 200)" time="0.031">
+    </testcase>
+    <testcase classname="Frontend Server Tests GET /health should return health status" name="Frontend Server Tests GET /health should return health status" time="0.006">
+    </testcase>
+    <testcase classname="Frontend Server Tests Static files should serve index.html" name="Frontend Server Tests Static files should serve index.html" time="0.005">
+    </testcase>
+    <testcase classname="Frontend Server Tests 404 handling should return 404 for non-existent routes" name="Frontend Server Tests 404 handling should return 404 for non-existent routes" time="0.004">
+    </testcase>
+  </testsuite>
+</testsuites>

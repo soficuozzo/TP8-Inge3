@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuites name="jest tests" tests="12" failures="0" errors="0" time="2.79">
+  <testsuite name="API Tasks - CRUD Operations" errors="0" failures="0" skipped="0" timestamp="2025-10-20T13:50:29" time="2.721" tests="12">
+    <testcase classname="API Tasks - CRUD Operations GET /api/tasks should return empty array when no tasks exist" name="API Tasks - CRUD Operations GET /api/tasks should return empty array when no tasks exist" time="0.09">
+    </testcase>
+    <testcase classname="API Tasks - CRUD Operations GET /api/tasks should return all tasks" name="API Tasks - CRUD Operations GET /api/tasks should return all tasks" time="0.044">
+    </testcase>
+    <testcase classname="API Tasks - CRUD Operations POST /api/tasks should create a new task successfully" name="API Tasks - CRUD Operations POST /api/tasks should create a new task successfully" time="0.033">
+    </testcase>
+    <testcase classname="API Tasks - CRUD Operations POST /api/tasks should fail when title is missing" name="API Tasks - CRUD Operations POST /api/tasks should fail when title is missing" time="0.015">
+    </testcase>
+    <testcase classname="API Tasks - CRUD Operations POST /api/tasks should fail when title is empty string" name="API Tasks - CRUD Operations POST /api/tasks should fail when title is empty string" time="0.019">
+    </testcase>
+    <testcase classname="API Tasks - CRUD Operations GET /api/tasks/:id should return task by id" name="API Tasks - CRUD Operations GET /api/tasks/:id should return task by id" time="0.031">
+    </testcase>
+    <testcase classname="API Tasks - CRUD Operations GET /api/tasks/:id should return 404 for non-existent task" name="API Tasks - CRUD Operations GET /api/tasks/:id should return 404 for non-existent task" time="0.016">
+    </testcase>
+    <testcase classname="API Tasks - CRUD Operations PUT /api/tasks/:id should update task successfully" name="API Tasks - CRUD Operations PUT /api/tasks/:id should update task successfully" time="0.026">
+    </testcase>
+    <testcase classname="API Tasks - CRUD Operations PUT /api/tasks/:id should return 404 when updating non-existent task" name="API Tasks - CRUD Operations PUT /api/tasks/:id should return 404 when updating non-existent task" time="0.021">
+    </testcase>
+    <testcase classname="API Tasks - CRUD Operations DELETE /api/tasks/:id should delete task successfully" name="API Tasks - CRUD Operations DELETE /api/tasks/:id should delete task successfully" time="0.032">
+    </testcase>
+    <testcase classname="API Tasks - CRUD Operations DELETE /api/tasks/:id should return 404 when deleting non-existent task" name="API Tasks - CRUD Operations DELETE /api/tasks/:id should return 404 when deleting non-existent task" time="0.014">
+    </testcase>
+    <testcase classname="API Tasks - CRUD Operations GET /healthz should return health status" name="API Tasks - CRUD Operations GET /healthz should return health status" time="0.019">
+    </testcase>
+  </testsuite>
+</testsuites>
