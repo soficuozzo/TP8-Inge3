@@ -2,8 +2,7 @@ name: CI/CD TP8 - Full Pipeline (QA + Cypress + PROD)
 
 on:
   push:
-    branches: [ main ]          # Todo automático
-  # NO workflow_dispatch
+    branches: [ main ]
 
 env:
   REGISTRY: ghcr.io
@@ -16,7 +15,6 @@ env:
 jobs:
   build-test:
     runs-on: ubuntu-latest
-
     steps:
       - uses: actions/checkout@v4
 
@@ -25,7 +23,7 @@ jobs:
         with:
           node-version: 20
 
-      # BACKEND TESTS
+      # Backend tests
       - run: cd backend && npm ci
       - run: cd backend && npm test -- --coverage
 
@@ -35,7 +33,7 @@ jobs:
           name: backend-code
           path: backend
 
-      # FRONTEND TESTS
+      # Frontend tests
       - run: cd frontend && npm ci
       - run: cd frontend && npm test -- --coverage
 
@@ -52,11 +50,9 @@ jobs:
   build-push-qa:
     needs: build-test
     runs-on: ubuntu-latest
-
     steps:
       - uses: actions/checkout@v4
 
-      # DESCARGAR ARTIFACTS
       - uses: actions/download-artifact@v4
         with:
           name: backend-code
@@ -67,86 +63,73 @@ jobs:
           name: frontend-code
           path: frontend
 
-      # LOGIN GHCR
       - uses: docker/login-action@v3
         with:
           registry: ${{ env.REGISTRY }}
           username: ${{ github.actor }}
           password: ${{ secrets.GHCR_TOKEN }}
 
-      # BUILD + PUSH BACKEND QA
       - run: docker build -t $IMAGE_BACKEND:qa backend
       - run: docker push $IMAGE_BACKEND:qa
 
-      # BUILD + PUSH FRONTEND QA
       - run: docker build -t $IMAGE_FRONTEND:qa frontend
       - run: docker push $IMAGE_FRONTEND:qa
 
 
 # ============================================
-# 3) DEPLOY-QA + TESTS CYPRESS POST-QA
+# 3) DEPLOY-QA + CYPRESS
 # ============================================
   deploy-qa:
     needs: build-push-qa
     runs-on: ubuntu-latest
+    environment:
+      name: qa           # << aparece en Deployments como QA
 
     steps:
-      - name: Deploy Backend QA
-        run: curl -X POST "${{ secrets.RENDER_WEBHOOK_BACK_QA }}"
+      - run: curl -X POST "${{ secrets.RENDER_WEBHOOK_BACK_QA }}"
+      - run: curl -X POST "${{ secrets.RENDER_WEBHOOK_FRONT_QA }}"
 
-      - name: Deploy Frontend QA
-        run: curl -X POST "${{ secrets.RENDER_WEBHOOK_FRONT_QA }}"
-
-      # Esperar Render
       - run: sleep 45
 
-      # CYPRESS TESTS POST-QA
       - uses: actions/checkout@v4
 
       - name: Install Cypress dependencies
-        run: |
-          cd frontend
-          npm ci
+        run: cd frontend && npm ci
 
       - name: Install Cypress
-        run: |
-          cd frontend
-          npx cypress install
+        run: cd frontend && npx cypress install
 
       - name: Run Cypress E2E against QA
-        env :
-            FRONT_URL: "https://tp8-frontend-qa-riob.onrender.com"
-            API_URL: "https://tp8-backend-qa-4u5j.onrender.com/api/tasks"
+        env:
+          FRONT_URL: "https://tp8-frontend-qa-riob.onrender.com"
+          API_URL: "https://tp8-backend-qa-4u5j.onrender.com/api/tasks"
         run: |
-            cd frontend
-            npx cypress run
+          cd frontend
+          npx cypress run
 
 
-
-# ============================================================================
-# 4) BUILD-PUSH-PROD → AUTOMÁTICO PERO REQUIERE APROBACIÓN DE ENVIRONMENT
+# ============================================================================ 
+# 4) BUILD-PUSH-PROD → AUTOMÁTICO + APROBACIÓN
 # ============================================================================
   build-push-prod:
     needs: deploy-qa
     runs-on: ubuntu-latest
     environment:
-      name: production   # pide aprobación antes de seguir
+      name: production      # << esto aparece como "production" en Deployments
+      url: https://tp8-frontend-prod.onrender.com
 
     steps:
       - uses: actions/checkout@v4
 
-      # Login GHCR
       - uses: docker/login-action@v3
         with:
           registry: ${{ env.REGISTRY }}
           username: ${{ github.actor }}
           password: ${{ secrets.GHCR_TOKEN }}
 
-      # BUILD + PUSH BACKEND PROD
       - run: docker build -t $IMAGE_BACKEND:prod backend
       - run: docker push $IMAGE_BACKEND:prod
 
-      # BUILD + PUSH FRONTEND PROD
       - run: docker build -t $IMAGE_FRONTEND:prod frontend
       - run: docker push $IMAGE_FRONTEND:prod
 
@@ -158,7 +141,7 @@ jobs:
     needs: build-push-prod
     runs-on: ubuntu-latest
     environment:
-      name: production   # este paso TAMBIÉN requiere aprobación
+      name: production      # << MISMO ENV, REQUIERE APROBACIÓN
 
     steps:
       - run: curl -X POST "${{ secrets.RENDER_WEBHOOK_BACK_PROD }}"
