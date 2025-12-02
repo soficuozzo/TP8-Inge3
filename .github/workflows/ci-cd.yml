@@ -6,8 +6,8 @@ on:
 
 env:
   REGISTRY: ghcr.io
-  IMAGE_BACKEND: ghcr.io/soficuozzo/TP8-Inge3/backend
-  IMAGE_FRONTEND: ghcr.io/soficuozzo/TP8-Inge3/frontend
+  IMAGE_BACKEND: ghcr.io/soficuozzo/tp8-inge3/backend
+  IMAGE_FRONTEND: ghcr.io/soficuozzo/tp8-inge3/frontend
 
 
 # ============================================
