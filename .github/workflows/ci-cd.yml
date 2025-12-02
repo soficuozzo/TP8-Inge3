@@ -1,9 +1,9 @@
-name: CI/CD TP8 - Front/Back + QA + PROD
+name: CI/CD TP8 - Full Pipeline (QA + Cypress + PROD)
 
 on:
   push:
-    branches: [ main ]     # QA automática
-  workflow_dispatch:        # PROD manual
+    branches: [ main ]          # Todo automático
+  # NO workflow_dispatch
 
 env:
   REGISTRY: ghcr.io
@@ -11,145 +11,151 @@ env:
   IMAGE_FRONTEND: ghcr.io/soficuozzo/tp8-frontend
 
 # ============================================
-#                TESTS UNITARIOS
+# 1) BUILD-TEST → TESTS UNITARIOS + ARTIFACTS
 # ============================================
 jobs:
-  run-tests:
+  build-test:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
           node-version: 20
 
-      # ---------- BACKEND TESTS ----------
-      - name: Install backend dependencies
-        run: |
-          cd backend
-          npm ci
+      # BACKEND TESTS
+      - run: cd backend && npm ci
+      - run: cd backend && npm test -- --coverage
 
-      - name: Run backend tests
-        run: |
-          cd backend
-          npm test -- --coverage
-
-      - name: Upload backend test results
+      - name: Upload Backend Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: backend-tests
-          path: backend/coverage
+          name: backend-code
+          path: backend
 
-      # ---------- FRONTEND TESTS ----------
-      - name: Install frontend dependencies
-        run: |
-          cd frontend
-          npm ci
+      # FRONTEND TESTS
+      - run: cd frontend && npm ci
+      - run: cd frontend && npm test -- --coverage
 
-      - name: Run frontend tests
-        run: |
-          cd frontend
-          npm test -- --coverage
-
-      - name: Upload frontend test results
+      - name: Upload Frontend Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: frontend-tests
-          path: frontend/coverage
+          name: frontend-code
+          path: frontend
 
 
-# ============================================
-#                QA AUTOMÁTICO
-# ============================================
-  build-and-push-qa:
-    needs: run-tests
+# ==================================================
+# 2) BUILD-PUSH-QA → DESCARGA ARTIFACTS + DOCKER QA
+# ==================================================
+  build-push-qa:
+    needs: build-test
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout repo
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: Log in to GHCR
-        uses: docker/login-action@v3   # correcta
+      # DESCARGAR ARTIFACTS
+      - uses: actions/download-artifact@v4
+        with:
+          name: backend-code
+          path: backend
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: frontend-code
+          path: frontend
+
+      # LOGIN GHCR
+      - uses: docker/login-action@v3
         with:
           registry: ${{ env.REGISTRY }}
           username: ${{ github.actor }}
           password: ${{ secrets.GHCR_TOKEN }}
 
-      # ---- BACKEND QA ----
-      - name: Build backend QA image
-        run: docker build -t $IMAGE_BACKEND:qa ./backend
+      # BUILD + PUSH BACKEND QA
+      - run: docker build -t $IMAGE_BACKEND:qa backend
+      - run: docker push $IMAGE_BACKEND:qa
 
-      - name: Push backend QA image
-        run: docker push $IMAGE_BACKEND:qa
-
-      # ---- FRONTEND QA ----
-      - name: Build frontend QA image
-        run: docker build -t $IMAGE_FRONTEND:qa ./frontend
-
-      - name: Push frontend QA image
-        run: docker push $IMAGE_FRONTEND:qa
+      # BUILD + PUSH FRONTEND QA
+      - run: docker build -t $IMAGE_FRONTEND:qa frontend
+      - run: docker push $IMAGE_FRONTEND:qa
 
 
+# ============================================
+# 3) DEPLOY-QA + TESTS CYPRESS POST-QA
+# ============================================
   deploy-qa:
-    needs: build-and-push-qa
+    needs: build-push-qa
     runs-on: ubuntu-latest
 
     steps:
-      - name: Trigger Render backend QA deploy
+      - name: Deploy Backend QA
         run: curl -X POST "${{ secrets.RENDER_WEBHOOK_BACK_QA }}"
 
-      - name: Trigger Render frontend QA deploy
+      - name: Deploy Frontend QA
         run: curl -X POST "${{ secrets.RENDER_WEBHOOK_FRONT_QA }}"
 
+      # Esperar Render
+      - run: sleep 45
 
-# ============================================
-#                PROD MANUAL
-# ============================================
-  build-and-push-prod:
+      # CYPRESS TESTS POST-QA
+      - uses: actions/checkout@v4
+
+      - name: Install Cypress dependencies
+        run: |
+          cd frontend
+          npm ci
+
+      - name: Install Cypress
+        run: |
+          cd frontend
+          npx cypress install
+
+      - name: Run Cypress E2E
+        run: |
+          cd frontend
+          npx cypress run --env FRONT_URL="https://tp8-frontend-qa-riob.onrender.com",API_URL="https://tp8-backend-qa-4u5j.onrender.com/api/tasks"
+
+
+# ============================================================================
+# 4) BUILD-PUSH-PROD → AUTOMÁTICO PERO REQUIERE APROBACIÓN DE ENVIRONMENT
+# ============================================================================
+  build-push-prod:
     needs: deploy-qa
     runs-on: ubuntu-latest
-    if: github.event_name == 'workflow_dispatch'   # SOLO manual
+    environment:
+      name: production   # pide aprobación antes de seguir
 
     steps:
-      - name: Checkout repo
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: Log in to GHCR
-        uses: docker/login-action@v3
+      # Login GHCR
+      - uses: docker/login-action@v3
         with:
           registry: ${{ env.REGISTRY }}
           username: ${{ github.actor }}
           password: ${{ secrets.GHCR_TOKEN }}
 
-      # ---- BACKEND PROD ----
-      - name: Build backend PROD image
-        run: docker build -t $IMAGE_BACKEND:prod ./backend
+      # BUILD + PUSH BACKEND PROD
+      - run: docker build -t $IMAGE_BACKEND:prod backend
+      - run: docker push $IMAGE_BACKEND:prod
 
-      - name: Push backend PROD image
-        run: docker push $IMAGE_BACKEND:prod
-
-      # ---- FRONTEND PROD ----
-      - name: Build frontend PROD image
-        run: docker build -t $IMAGE_FRONTEND:prod ./frontend
-
-      - name: Push frontend PROD image
-        run: docker push $IMAGE_FRONTEND:prod
+      # BUILD + PUSH FRONTEND PROD
+      - run: docker build -t $IMAGE_FRONTEND:prod frontend
+      - run: docker push $IMAGE_FRONTEND:prod
 
 
+# ============================================
+# 5) DEPLOY PROD AUTOMÁTICO + APROBACIÓN
+# ============================================
   deploy-prod:
-    needs: build-and-push-prod
+    needs: build-push-prod
     runs-on: ubuntu-latest
-    if: github.event_name == 'workflow_dispatch'
     environment:
-      name: production    # habilita aprobación manual
+      name: production   # este paso TAMBIÉN requiere aprobación
 
     steps:
-      - name: Trigger Render backend PROD deploy
-        run: curl -X POST "${{ secrets.RENDER_WEBHOOK_BACK_PROD }}"
-
-      - name: Trigger Render frontend PROD deploy
-        run: curl -X POST "${{ secrets.RENDER_WEBHOOK_FRONT_PROD }}"
+      - run: curl -X POST "${{ secrets.RENDER_WEBHOOK_BACK_PROD }}"
+      - run: curl -X POST "${{ secrets.RENDER_WEBHOOK_FRONT_PROD }}"
