@@ -6,8 +6,9 @@ on:
 
 env:
   REGISTRY: ghcr.io
-  IMAGE_BACKEND: ghcr.io/soficuozzo/tp8-backend
-  IMAGE_FRONTEND: ghcr.io/soficuozzo/tp8-frontend
+  IMAGE_BACKEND: ghcr.io/soficuozzo/TP8-Inge3/backend
+  IMAGE_FRONTEND: ghcr.io/soficuozzo/TP8-Inge3/frontend
+
 
 # ============================================
 # 1) BUILD-TEST → TESTS UNITARIOS + ARTIFACTS
