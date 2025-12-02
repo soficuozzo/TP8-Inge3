@@ -113,10 +113,14 @@ jobs:
           cd frontend
           npx cypress install
 
-      - name: Run Cypress E2E
+      - name: Run Cypress E2E against QA
+        env :
+            FRONT_URL: "https://tp8-frontend-qa-riob.onrender.com"
+            API_URL: "https://tp8-backend-qa-4u5j.onrender.com/api/tasks"
         run: |
-          cd frontend
-          npx cypress run --env FRONT_URL="https://tp8-frontend-qa-riob.onrender.com",API_URL="https://tp8-backend-qa-4u5j.onrender.com/api/tasks"
+            cd frontend
+            npx cypress run
+
 
 
 # ============================================================================
