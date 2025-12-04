@@ -19,7 +19,7 @@
         }
 
         .container {
-            max-width: 800px;
+            max-width: 900px;
             margin: 0 auto;
             background: white;
             border-radius: 20px;
@@ -34,28 +34,40 @@
             font-size: 2.5em;
         }
 
+        .layout-top {
+            display: grid;
+            grid-template-columns: 2fr 1.2fr;
+            gap: 30px;
+            align-items: flex-start;
+        }
+
         .form-group {
-            margin-bottom: 20px;
+            margin-bottom: 15px;
         }
 
         label {
             display: block;
-            margin-bottom: 8px;
+            margin-bottom: 6px;
             color: #555;
             font-weight: 600;
+            font-size: 0.95rem;
         }
 
         input[type="text"],
+        input[type="date"],
+        select,
         textarea {
             width: 100%;
-            padding: 12px;
+            padding: 10px;
             border: 2px solid #e0e0e0;
             border-radius: 8px;
-            font-size: 16px;
+            font-size: 14px;
             transition: border-color 0.3s;
         }
 
         input[type="text"]:focus,
+        input[type="date"]:focus,
+        select:focus,
         textarea:focus {
             outline: none;
             border-color: #667eea;
@@ -67,11 +79,11 @@
         }
 
         .btn {
-            padding: 12px 30px;
+            padding: 10px 20px;
             border: none;
             border-radius: 8px;
             cursor: pointer;
-            font-size: 16px;
+            font-size: 14px;
             font-weight: 600;
             transition: all 0.3s;
         }
@@ -79,17 +91,16 @@
         .btn-primary {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
-            width: 100%;
         }
 
         .btn-primary:hover {
-            transform: translateY(-2px);
+            transform: translateY(-1px);
             box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
         }
 
         .btn-small {
-            padding: 6px 12px;
-            font-size: 14px;
+            padding: 6px 10px;
+            font-size: 13px;
             margin-left: 5px;
         }
 
@@ -108,14 +119,24 @@
             color: white;
         }
 
+        .btn-muted {
+            background: #e5e7eb;
+            color: #374151;
+        }
+
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
         .tasks-list {
-            margin-top: 40px;
+            margin-top: 30px;
         }
 
         .task-item {
             background: #f9fafb;
-            padding: 20px;
-            margin-bottom: 15px;
+            padding: 18px;
+            margin-bottom: 12px;
             border-radius: 12px;
             border-left: 4px solid #667eea;
             transition: all 0.3s;
@@ -123,19 +144,24 @@
 
         .task-item:hover {
             transform: translateX(5px);
-            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.08);
         }
 
         .task-item.completed {
-            opacity: 0.7;
             border-left-color: #10b981;
+            opacity: 0.9;
+        }
+
+        .task-item.cancelled {
+            border-left-color: #ef4444;
+            opacity: 0.7;
         }
 
         .task-title {
-            font-size: 1.3em;
+            font-size: 1.2em;
             font-weight: 600;
-            color: #333;
-            margin-bottom: 8px;
+            color: #111827;
+            margin-bottom: 6px;
         }
 
         .task-item.completed .task-title {
@@ -145,26 +171,115 @@
 
         .task-description {
             color: #6b7280;
-            margin-bottom: 12px;
+            margin-bottom: 10px;
             line-height: 1.5;
+            font-size: 0.95rem;
+        }
+
+        .task-meta {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 10px;
+            font-size: 0.8rem;
+            align-items: center;
+        }
+
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 4px 8px;
+            border-radius: 999px;
+            font-weight: 600;
+        }
+
+        .badge-priority-low {
+            background: #ecfdf5;
+            color: #047857;
+        }
+
+        .badge-priority-medium {
+            background: #eff6ff;
+            color: #1d4ed8;
+        }
+
+        .badge-priority-high {
+            background: #fef2f2;
+            color: #b91c1c;
+        }
+
+        .badge-status-pending {
+            background: #fefce8;
+            color: #92400e;
+        }
+
+        .badge-status-completed {
+            background: #ecfdf3;
+            color: #15803d;
+        }
+
+        .badge-status-cancelled {
+            background: #fef2f2;
+            color: #b91c1c;
+        }
+
+        .badge-due-overdue {
+            background: #fef2f2;
+            color: #b91c1c;
+        }
+
+        .badge-due-normal {
+            background: #eff6ff;
+            color: #1d4ed8;
         }
 
         .task-actions {
             display: flex;
-            gap: 10px;
+            flex-wrap: wrap;
+            gap: 6px;
+            margin-top: 8px;
         }
 
         .empty-state {
             text-align: center;
-            padding: 60px 20px;
+            padding: 40px 20px;
             color: #9ca3af;
         }
 
         .empty-state svg {
-            width: 100px;
-            height: 100px;
-            margin-bottom: 20px;
+            width: 90px;
+            height: 90px;
+            margin-bottom: 12px;
             opacity: 0.5;
+        }
+
+        .toolbar {
+            margin-top: 10px;
+            margin-bottom: 15px;
+            display: flex;
+            gap: 10px;
+            align-items: flex-end;
+            flex-wrap: wrap;
+        }
+
+        .toolbar .form-group {
+            margin-bottom: 0;
+        }
+
+        .stats {
+            margin-top: 10px;
+            padding: 10px 14px;
+            border-radius: 10px;
+            background: #f3f4ff;
+            color: #111827;
+            font-size: 0.9rem;
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .stats span {
+            font-weight: 600;
         }
 
         #editForm {
@@ -186,7 +301,7 @@
 
         .modal {
             background: white;
-            padding: 30px;
+            padding: 24px;
             border-radius: 15px;
             max-width: 500px;
             width: 90%;
@@ -196,7 +311,7 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 20px;
+            margin-bottom: 15px;
         }
 
         .modal-header h2 {
@@ -216,31 +331,73 @@
             gap: 10px;
             margin-top: 20px;
         }
+
+        @media (max-width: 768px) {
+            .layout-top {
+                grid-template-columns: 1fr;
+            }
+        }
     </style>
 </head>
 <body>
     <div class="container">
         <h1>📝 Lista de Tareas</h1>
-        
-        <form id="taskForm">
-            <div class="form-group">
-                <label for="title">Título</label>
-                <input type="text" id="title" required placeholder="Ej: Comprar leche">
+
+        <div class="layout-top">
+            <!-- FORMULARIO -->
+            <form id="taskForm">
+                <div class="form-group">
+                    <label for="title">Título</label>
+                    <input type="text" id="title" required placeholder="Ej: Comprar leche">
+                </div>
+                
+                <div class="form-group">
+                    <label for="description">Descripción</label>
+                    <textarea id="description" placeholder="Detalles de la tarea..."></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label for="priority">Prioridad</label>
+                    <select id="priority">
+                        <option value="low">Baja</option>
+                        <option value="medium" selected>Media</option>
+                        <option value="high">Alta</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="dueDate">Fecha límite</label>
+                    <input type="date" id="dueDate">
+                </div>
+                
+                <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 10px;">
+                    ➕ Agregar Tarea
+                </button>
+            </form>
+
+            <!-- BUSCADOR + STATS -->
+            <div>
+                <div class="toolbar">
+                    <div class="form-group" style="flex: 1;">
+                        <label for="search">Buscar</label>
+                        <input type="text" id="search" placeholder="Buscar por título o descripción">
+                    </div>
+                    <button class="btn btn-primary btn-small" onclick="applySearch()">🔍 Buscar</button>
+                    <button class="btn btn-muted btn-small" onclick="clearSearch()">Limpiar</button>
+                </div>
+
+                <div id="stats" class="stats">
+                    📊 Cargando estadísticas...
+                </div>
             </div>
-            
-            <div class="form-group">
-                <label for="description">Descripción</label>
-                <textarea id="description" placeholder="Detalles de la tarea..."></textarea>
-            </div>
-            
-            <button type="submit" class="btn btn-primary">➕ Agregar Tarea</button>
-        </form>
+        </div>
 
         <div class="tasks-list">
             <div id="tasksList"></div>
         </div>
     </div>
 
+    <!-- MODAL EDITAR -->
     <div id="editForm">
         <div class="modal">
             <div class="modal-header">
@@ -255,6 +412,18 @@
                 <label for="editDescription">Descripción</label>
                 <textarea id="editDescription"></textarea>
             </div>
+            <div class="form-group">
+                <label for="editPriority">Prioridad</label>
+                <select id="editPriority">
+                    <option value="low">Baja</option>
+                    <option value="medium">Media</option>
+                    <option value="high">Alta</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="editDueDate">Fecha límite</label>
+                <input type="date" id="editDueDate">
+            </div>
             <div class="modal-actions">
                 <button onclick="saveEdit()" class="btn btn-primary" style="flex: 1;">Guardar</button>
                 <button onclick="closeEditForm()" class="btn btn-danger" style="flex: 1;">Cancelar</button>
@@ -266,7 +435,8 @@
     // ========== CONFIGURACIÓN DE API =========
     function getApiUrl() {
         const hostname = window.location.hostname;
-    // Local Development
+
+        // Local Development
         if (hostname === 'localhost' || hostname === '127.0.0.1') {
             return 'http://localhost:8080/api/tasks';
         }
@@ -283,49 +453,116 @@
 
         // Fallback
         return 'http://localhost:8080/api/tasks';
-}
+    }
 
-    
     const API_URL = getApiUrl();
     console.log('🔗 API URL:', API_URL);
-    
+
     let editingTaskId = null;
+    let currentSearch = '';
+
+    // Helpers de UI
+    function escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
+
+    function getPriorityLabel(priority) {
+        switch (priority) {
+            case 'low': return 'Baja';
+            case 'high': return 'Alta';
+            default: return 'Media';
+        }
+    }
+
+    function getStatusLabel(status) {
+        switch (status) {
+            case 'completed': return 'Completada';
+            case 'cancelled': return 'Cancelada';
+            default: return 'Pendiente';
+        }
+    }
+
+    function formatDueDate(dueDate) {
+        if (!dueDate) return 'Sin fecha límite';
+        const d = new Date(dueDate);
+        if (isNaN(d.getTime())) return 'Sin fecha límite';
+        return d.toLocaleDateString('es-AR');
+    }
+
+    function isOverdue(dueDate, status) {
+        if (!dueDate) return false;
+        if (status === 'completed' || status === 'cancelled') return false;
+        const now = new Date();
+        const d = new Date(dueDate);
+        return d < new Date(now.toDateString()); // vencida si es antes de hoy
+    }
 
     // ========== CARGAR TAREAS ==========
+
     async function loadTasks() {
         try {
-            const response = await fetch(API_URL);
-            
+            let url = API_URL;
+            if (currentSearch && currentSearch.trim() !== '') {
+                const params = new URLSearchParams();
+                params.set('search', currentSearch.trim());
+                url += `?${params.toString()}`;
+            }
+
+            const response = await fetch(url);
+
             if (!response.ok) {
                 console.error('Error del servidor:', response.status);
                 displayTasks([]);
                 return;
             }
-            
+
             const tasks = await response.json();
-            
             if (!Array.isArray(tasks)) {
                 console.error('La respuesta no es un array:', tasks);
                 displayTasks([]);
                 return;
             }
-            
+
             displayTasks(tasks);
+            await loadStats();
         } catch (error) {
             console.error('Error loading tasks:', error);
             displayTasks([]);
         }
     }
 
-    // ========== MOSTRAR TAREAS ==========
+    async function loadStats() {
+        try {
+            const response = await fetch(`${API_URL}/stats`);
+            if (!response.ok) {
+                console.error('Error stats:', response.status);
+                return;
+            }
+            const stats = await response.json();
+            const statsDiv = document.getElementById('stats');
+            statsDiv.innerHTML = `
+                📊 <span>Total:</span> ${stats.total} |
+                <span>Pendientes:</span> ${stats.pending} |
+                <span>Completadas:</span> ${stats.completed} |
+                <span>Canceladas:</span> ${stats.cancelled}
+            `;
+        } catch (error) {
+            console.error('Error loading stats:', error);
+        }
+    }
+
     function displayTasks(tasks) {
         const tasksList = document.getElementById('tasksList');
-        
+
         if (!tasks || tasks.length === 0) {
             tasksList.innerHTML = `
                 <div class="empty-state">
                     <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                              d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2">
+                        </path>
                     </svg>
                     <h3>No hay tareas todavía</h3>
                     <p>¡Agrega tu primera tarea arriba!</p>
@@ -334,25 +571,69 @@
             return;
         }
 
-        tasksList.innerHTML = tasks.map(task => `
-            <div class="task-item ${task.completed ? 'completed' : ''}">
-                <div class="task-title">${escapeHtml(task.title)}</div>
-                <div class="task-description">${escapeHtml(task.description || '')}</div>
-                <div class="task-actions">
-                    <button onclick="toggleTask('${task._id}', ${!task.completed})" class="btn btn-small ${task.completed ? 'btn-warning' : 'btn-success'}">
-                        ${task.completed ? '↩️ Reabrir' : '✓ Completar'}
-                    </button>
-                    <button onclick="editTask('${task._id}')" class="btn btn-small btn-warning">✏️ Editar</button>
-                    <button onclick="deleteTask('${task._id}')" class="btn btn-small btn-danger">🗑️ Eliminar</button>
+        tasksList.innerHTML = tasks.map(task => {
+            const priorityLabel = getPriorityLabel(task.priority);
+            const statusLabel = getStatusLabel(task.status);
+            const overdue = isOverdue(task.dueDate, task.status);
+
+            const priorityClass = task.priority === 'high'
+                ? 'badge-priority-high'
+                : task.priority === 'low'
+                    ? 'badge-priority-low'
+                    : 'badge-priority-medium';
+
+            const statusClass = `badge-status-${task.status || 'pending'}`;
+            const dueClass = overdue ? 'badge-due-overdue' : 'badge-due-normal';
+
+            return `
+                <div class="task-item ${task.status === 'completed' ? 'completed' : ''} ${task.status === 'cancelled' ? 'cancelled' : ''}">
+                    <div class="task-title">${escapeHtml(task.title)}</div>
+                    <div class="task-description">${escapeHtml(task.description || '')}</div>
+
+                    <div class="task-meta">
+                        <span class="badge ${priorityClass}">Prioridad: ${priorityLabel}</span>
+                        <span class="badge ${statusClass}">Estado: ${statusLabel}</span>
+                        <span class="badge ${dueClass}">Vence: ${formatDueDate(task.dueDate)}</span>
+                    </div>
+
+                    <div class="task-actions">
+                        <button
+                            onclick="updateTaskStatus('${task._id}', 'pending')"
+                            class="btn btn-small btn-warning"
+                            ${task.status === 'pending' ? 'disabled' : ''}>
+                            ⏳ Pendiente
+                        </button>
+                        <button
+                            onclick="updateTaskStatus('${task._id}', 'completed')"
+                            class="btn btn-small btn-success"
+                            ${task.status === 'completed' ? 'disabled' : ''}>
+                            ✓ Completar
+                        </button>
+                        <button
+                            onclick="updateTaskStatus('${task._id}', 'cancelled')"
+                            class="btn btn-small btn-danger"
+                            ${task.status === 'cancelled' ? 'disabled' : ''}>
+                            ✖ Cancelar
+                        </button>
+                        <button onclick="editTask('${task._id}')" class="btn btn-small btn-warning">✏️ Editar</button>
+                        <button onclick="deleteTask('${task._id}')" class="btn btn-small btn-danger">🗑️ Eliminar</button>
+                    </div>
                 </div>
-            </div>
-        `).join('');
+            `;
+        }).join('');
     }
 
-    function escapeHtml(text) {
-        const div = document.createElement('div');
-        div.textContent = text;
-        return div.innerHTML;
+    // ========== BUSCADOR ==========
+    function applySearch() {
+        const input = document.getElementById('search');
+        currentSearch = input.value || '';
+        loadTasks();
+    }
+
+    function clearSearch() {
+        currentSearch = '';
+        document.getElementById('search').value = '';
+        loadTasks();
     }
 
     // ========== CREAR TAREA ==========
@@ -362,7 +643,9 @@
         const task = {
             title: document.getElementById('title').value,
             description: document.getElementById('description').value,
-            completed: false
+            priority: document.getElementById('priority').value,
+            dueDate: document.getElementById('dueDate').value || null,
+            status: 'pending'
         };
 
         try {
@@ -380,7 +663,7 @@
             }
 
             document.getElementById('taskForm').reset();
-            await loadTasks();
+            loadTasks();
             console.log('✅ Tarea creada exitosamente');
         } catch (error) {
             console.error('Error creating task:', error);
@@ -389,22 +672,22 @@
     });
 
     // ========== CAMBIAR ESTADO ==========
-    async function toggleTask(id, completed) {
+    async function updateTaskStatus(id, status) {
         try {
-            const response = await fetch(`${API_URL}/${id}`);
-            const task = await response.json();
-            
-            task.completed = completed;
-            
-            await fetch(`${API_URL}/${id}`, {
+            const response = await fetch(`${API_URL}/${id}/status`, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(task)
+                body: JSON.stringify({ status })
             });
+
+            if (!response.ok) {
+                console.error('Error cambiando estado:', await response.json());
+                return;
+            }
 
             loadTasks();
         } catch (error) {
-            console.error('Error toggling task:', error);
+            console.error('Error updating status:', error);
         }
     }
 
@@ -412,12 +695,21 @@
     async function editTask(id) {
         try {
             const response = await fetch(`${API_URL}/${id}`);
+            if (!response.ok) {
+                console.error('Error cargando tarea:', response.status);
+                return;
+            }
+
             const task = await response.json();
-            
-            document.getElementById('editTitle').value = task.title;
+
+            document.getElementById('editTitle').value = task.title || '';
             document.getElementById('editDescription').value = task.description || '';
+            document.getElementById('editPriority').value = task.priority || 'medium';
+            document.getElementById('editDueDate').value = task.dueDate
+                ? new Date(task.dueDate).toISOString().slice(0, 10)
+                : '';
+
             editingTaskId = id;
-            
             document.getElementById('editForm').classList.add('active');
         } catch (error) {
             console.error('Error loading task:', error);
@@ -427,18 +719,26 @@
     async function saveEdit() {
         if (!editingTaskId) return;
 
+        const updated = {
+            title: document.getElementById('editTitle').value,
+            description: document.getElementById('editDescription').value,
+            priority: document.getElementById('editPriority').value,
+            dueDate: document.getElementById('editDueDate').value || null
+        };
+
         try {
-            const response = await fetch(`${API_URL}/${editingTaskId}`);
-            const task = await response.json();
-            
-            task.title = document.getElementById('editTitle').value;
-            task.description = document.getElementById('editDescription').value;
-            
-            await fetch(`${API_URL}/${editingTaskId}`, {
+            const response = await fetch(`${API_URL}/${editingTaskId}`, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(task)
+                body: JSON.stringify(updated)
             });
+
+            if (!response.ok) {
+                const error = await response.json();
+                console.error('Error actualizando tarea:', error);
+                alert('Error al actualizar la tarea: ' + (error.error || 'Error desconocido'));
+                return;
+            }
 
             closeEditForm();
             loadTasks();
@@ -457,7 +757,10 @@
         if (!confirm('¿Estás seguro de eliminar esta tarea?')) return;
 
         try {
-            await fetch(`${API_URL}/${id}`, { method: 'DELETE' });
+            const response = await fetch(`${API_URL}/${id}`, { method: 'DELETE' });
+            if (!response.ok && response.status !== 204) {
+                console.error('Error eliminando tarea:', response.status);
+            }
             loadTasks();
         } catch (error) {
             console.error('Error deleting task:', error);

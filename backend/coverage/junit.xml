@@ -1,29 +1,39 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<testsuites name="jest tests" tests="12" failures="0" errors="0" time="2.79">
-  <testsuite name="API Tasks - CRUD Operations" errors="0" failures="0" skipped="0" timestamp="2025-10-20T13:50:29" time="2.721" tests="12">
-    <testcase classname="API Tasks - CRUD Operations GET /api/tasks should return empty array when no tasks exist" name="API Tasks - CRUD Operations GET /api/tasks should return empty array when no tasks exist" time="0.09">
+<testsuites name="jest tests" tests="17" failures="0" errors="0" time="4.535">
+  <testsuite name="API Tasks - CRUD + NEW FEATURES" errors="0" failures="0" skipped="0" timestamp="2025-12-03T15:09:47" time="4.384" tests="17">
+    <testcase classname="API Tasks - CRUD + NEW FEATURES GET /api/tasks → should return empty array" name="API Tasks - CRUD + NEW FEATURES GET /api/tasks → should return empty array" time="0.129">
     </testcase>
-    <testcase classname="API Tasks - CRUD Operations GET /api/tasks should return all tasks" name="API Tasks - CRUD Operations GET /api/tasks should return all tasks" time="0.044">
+    <testcase classname="API Tasks - CRUD + NEW FEATURES POST /api/tasks → creates task with priority + dueDate" name="API Tasks - CRUD + NEW FEATURES POST /api/tasks → creates task with priority + dueDate" time="0.064">
     </testcase>
-    <testcase classname="API Tasks - CRUD Operations POST /api/tasks should create a new task successfully" name="API Tasks - CRUD Operations POST /api/tasks should create a new task successfully" time="0.033">
+    <testcase classname="API Tasks - CRUD + NEW FEATURES POST /api/tasks → invalid priority should default to medium" name="API Tasks - CRUD + NEW FEATURES POST /api/tasks → invalid priority should default to medium" time="0.028">
     </testcase>
-    <testcase classname="API Tasks - CRUD Operations POST /api/tasks should fail when title is missing" name="API Tasks - CRUD Operations POST /api/tasks should fail when title is missing" time="0.015">
+    <testcase classname="API Tasks - CRUD + NEW FEATURES POST /api/tasks → invalid status should default to pending" name="API Tasks - CRUD + NEW FEATURES POST /api/tasks → invalid status should default to pending" time="0.03">
     </testcase>
-    <testcase classname="API Tasks - CRUD Operations POST /api/tasks should fail when title is empty string" name="API Tasks - CRUD Operations POST /api/tasks should fail when title is empty string" time="0.019">
+    <testcase classname="API Tasks - CRUD + NEW FEATURES POST /api/tasks → fails when title missing" name="API Tasks - CRUD + NEW FEATURES POST /api/tasks → fails when title missing" time="0.021">
     </testcase>
-    <testcase classname="API Tasks - CRUD Operations GET /api/tasks/:id should return task by id" name="API Tasks - CRUD Operations GET /api/tasks/:id should return task by id" time="0.031">
+    <testcase classname="API Tasks - CRUD + NEW FEATURES GET /api/tasks/:id → returns task" name="API Tasks - CRUD + NEW FEATURES GET /api/tasks/:id → returns task" time="0.035">
     </testcase>
-    <testcase classname="API Tasks - CRUD Operations GET /api/tasks/:id should return 404 for non-existent task" name="API Tasks - CRUD Operations GET /api/tasks/:id should return 404 for non-existent task" time="0.016">
+    <testcase classname="API Tasks - CRUD + NEW FEATURES GET /api/tasks/:id → 404 when not found" name="API Tasks - CRUD + NEW FEATURES GET /api/tasks/:id → 404 when not found" time="0.021">
     </testcase>
-    <testcase classname="API Tasks - CRUD Operations PUT /api/tasks/:id should update task successfully" name="API Tasks - CRUD Operations PUT /api/tasks/:id should update task successfully" time="0.026">
+    <testcase classname="API Tasks - CRUD + NEW FEATURES PUT /api/tasks/:id → updates title, priority, dueDate, status" name="API Tasks - CRUD + NEW FEATURES PUT /api/tasks/:id → updates title, priority, dueDate, status" time="0.041">
     </testcase>
-    <testcase classname="API Tasks - CRUD Operations PUT /api/tasks/:id should return 404 when updating non-existent task" name="API Tasks - CRUD Operations PUT /api/tasks/:id should return 404 when updating non-existent task" time="0.021">
+    <testcase classname="API Tasks - CRUD + NEW FEATURES PUT /api/tasks/:id → 404 when updating non-existent task" name="API Tasks - CRUD + NEW FEATURES PUT /api/tasks/:id → 404 when updating non-existent task" time="0.021">
     </testcase>
-    <testcase classname="API Tasks - CRUD Operations DELETE /api/tasks/:id should delete task successfully" name="API Tasks - CRUD Operations DELETE /api/tasks/:id should delete task successfully" time="0.032">
+    <testcase classname="API Tasks - CRUD + NEW FEATURES DELETE /api/tasks/:id → deletes task" name="API Tasks - CRUD + NEW FEATURES DELETE /api/tasks/:id → deletes task" time="0.033">
     </testcase>
-    <testcase classname="API Tasks - CRUD Operations DELETE /api/tasks/:id should return 404 when deleting non-existent task" name="API Tasks - CRUD Operations DELETE /api/tasks/:id should return 404 when deleting non-existent task" time="0.014">
+    <testcase classname="API Tasks - CRUD + NEW FEATURES DELETE /api/tasks/:id → 404 when not found" name="API Tasks - CRUD + NEW FEATURES DELETE /api/tasks/:id → 404 when not found" time="0.018">
     </testcase>
-    <testcase classname="API Tasks - CRUD Operations GET /healthz should return health status" name="API Tasks - CRUD Operations GET /healthz should return health status" time="0.019">
+    <testcase classname="API Tasks - CRUD + NEW FEATURES GET /api/tasks?search=word → should filter tasks" name="API Tasks - CRUD + NEW FEATURES GET /api/tasks?search=word → should filter tasks" time="0.045">
+    </testcase>
+    <testcase classname="API Tasks - CRUD + NEW FEATURES GET /api/tasks?priority=high → returns only high priority" name="API Tasks - CRUD + NEW FEATURES GET /api/tasks?priority=high → returns only high priority" time="0.034">
+    </testcase>
+    <testcase classname="API Tasks - CRUD + NEW FEATURES GET /api/tasks?status=completed → returns only completed tasks" name="API Tasks - CRUD + NEW FEATURES GET /api/tasks?status=completed → returns only completed tasks" time="0.033">
+    </testcase>
+    <testcase classname="API Tasks - CRUD + NEW FEATURES PUT /api/tasks/:id/status → updates status" name="API Tasks - CRUD + NEW FEATURES PUT /api/tasks/:id/status → updates status" time="0.025">
+    </testcase>
+    <testcase classname="API Tasks - CRUD + NEW FEATURES GET /api/tasks/stats → returns correct counters" name="API Tasks - CRUD + NEW FEATURES GET /api/tasks/stats → returns correct counters" time="0.068">
+    </testcase>
+    <testcase classname="API Tasks - CRUD + NEW FEATURES GET /healthz → should return OK" name="API Tasks - CRUD + NEW FEATURES GET /healthz → should return OK" time="0.016">
     </testcase>
   </testsuite>
 </testsuites>

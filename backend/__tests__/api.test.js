@@ -5,7 +5,7 @@ const { app, Task } = require('../app');
 
 let mongoServer;
 
-// ARRANGE: Configurar MongoDB en memoria antes de todos los tests
+// ======= SETUP TESTING DB =======
 beforeAll(async () => {
   mongoServer = await MongoMemoryServer.create();
   const mongoUri = mongoServer.getUri();
@@ -15,218 +15,255 @@ beforeAll(async () => {
   });
 });
 
-// Limpiar la BD entre tests
 beforeEach(async () => {
   await Task.deleteMany({});
 });
 
-// Cerrar conexiones después de todos los tests
 afterAll(async () => {
   await mongoose.disconnect();
   await mongoServer.stop();
 });
 
-describe('API Tasks - CRUD Operations', () => {
-  
-  // TEST 1: GET /api/tasks - Lista vacía
-  describe('GET /api/tasks', () => {
-    it('should return empty array when no tasks exist', async () => {
-      // ACT
-      const response = await request(app).get('/api/tasks');
-      
-      // ASSERT
-      expect(response.status).toBe(200);
-      expect(response.body).toEqual([]);
-    });
+// ===========================================
+//                TESTS CRUD
+// ===========================================
+describe('API Tasks - CRUD + NEW FEATURES', () => {
 
-    it('should return all tasks', async () => {
-      // ARRANGE
-      await Task.create([
-        { title: 'Task 1', description: 'Description 1' },
-        { title: 'Task 2', description: 'Description 2' }
-      ]);
-
-      // ACT
-      const response = await request(app).get('/api/tasks');
-
-      // ASSERT
-      expect(response.status).toBe(200);
-      expect(response.body).toHaveLength(2);
-      expect(response.body[0].title).toBe('Task 2'); // Orden descendente por createdAt
-    });
+  // -------------------------------------------
+  // GET /api/tasks EMPTY
+  // -------------------------------------------
+  it('GET /api/tasks → should return empty array', async () => {
+    const response = await request(app).get('/api/tasks');
+    expect(response.status).toBe(200);
+    expect(response.body).toEqual([]);
   });
 
-  // TEST 2: POST /api/tasks - Crear tarea
-  describe('POST /api/tasks', () => {
-    it('should create a new task successfully', async () => {
-      // ARRANGE
-      const newTask = {
-        title: 'Nueva tarea',
-        description: 'Descripción de prueba',
-        completed: false
-      };
+  // -------------------------------------------
+  // POST /api/tasks – CREATE WITH PRIORITY + DATE
+  // -------------------------------------------
+  it('POST /api/tasks → creates task with priority + dueDate', async () => {
+    const task = {
+      title: 'Nueva tarea con prioridad',
+      description: 'Test',
+      priority: 'high',
+      status: 'pending',
+      dueDate: '2025-01-15'
+    };
 
-      // ACT
-      const response = await request(app)
-        .post('/api/tasks')
-        .send(newTask);
+    const res = await request(app).post('/api/tasks').send(task);
 
-      // ASSERT
-      expect(response.status).toBe(201);
-      expect(response.body.title).toBe(newTask.title);
-      expect(response.body.description).toBe(newTask.description);
-      expect(response.body.completed).toBe(false);
-      expect(response.body._id).toBeDefined();
-    });
-
-    it('should fail when title is missing', async () => {
-      // ARRANGE
-      const invalidTask = {
-        description: 'Sin título'
-      };
-
-      // ACT
-      const response = await request(app)
-        .post('/api/tasks')
-        .send(invalidTask);
-
-      // ASSERT
-      expect(response.status).toBe(400);
-      expect(response.body.error).toBe('El título es requerido');
-    });
-
-    it('should fail when title is empty string', async () => {
-      // ARRANGE
-      const invalidTask = {
-        title: '   ',
-        description: 'Título vacío'
-      };
-
-      // ACT
-      const response = await request(app)
-        .post('/api/tasks')
-        .send(invalidTask);
-
-      // ASSERT
-      expect(response.status).toBe(400);
-      expect(response.body.error).toBe('El título es requerido');
-    });
+    expect(res.status).toBe(201);
+    expect(res.body.title).toBe(task.title);
+    expect(res.body.priority).toBe('high');
+    expect(res.body.status).toBe('pending');
+    expect(new Date(res.body.dueDate)).toEqual(new Date('2025-01-15'));
   });
 
-  // TEST 3: GET /api/tasks/:id - Obtener tarea por ID
-  describe('GET /api/tasks/:id', () => {
-    it('should return task by id', async () => {
-      // ARRANGE
-      const task = await Task.create({
-        title: 'Test Task',
-        description: 'Test Description'
-      });
+  // -------------------------------------------
+  // PRIORIDAD INVÁLIDA → debe usar "medium"
+  // -------------------------------------------
+  it('POST /api/tasks → invalid priority should default to medium', async () => {
+    const res = await request(app)
+      .post('/api/tasks')
+      .send({ title: 'Mal priority', priority: 'xxx' });
 
-      // ACT
-      const response = await request(app).get(`/api/tasks/${task._id}`);
-
-      // ASSERT
-      expect(response.status).toBe(200);
-      expect(response.body.title).toBe('Test Task');
-      expect(response.body._id).toBe(task._id.toString());
-    });
-
-    it('should return 404 for non-existent task', async () => {
-      // ARRANGE
-      const fakeId = new mongoose.Types.ObjectId();
-
-      // ACT
-      const response = await request(app).get(`/api/tasks/${fakeId}`);
-
-      // ASSERT
-      expect(response.status).toBe(404);
-      expect(response.body.error).toBe('Tarea no encontrada');
-    });
+    expect(res.status).toBe(201);
+    expect(res.body.priority).toBe('medium');
   });
 
-  // TEST 4: PUT /api/tasks/:id - Actualizar tarea
-  describe('PUT /api/tasks/:id', () => {
-    it('should update task successfully', async () => {
-      // ARRANGE
-      const task = await Task.create({
-        title: 'Original Title',
-        description: 'Original Description',
-        completed: false
-      });
+  // -------------------------------------------
+  // STATUS INVÁLIDO → debe usar "pending"
+  // -------------------------------------------
+  it('POST /api/tasks → invalid status should default to pending', async () => {
+    const res = await request(app)
+      .post('/api/tasks')
+      .send({ title: 'Mal status', status: 'xxx' });
 
-      const updates = {
-        title: 'Updated Title',
-        description: 'Updated Description',
-        completed: true
-      };
-
-      // ACT
-      const response = await request(app)
-        .put(`/api/tasks/${task._id}`)
-        .send(updates);
-
-      // ASSERT
-      expect(response.status).toBe(200);
-      expect(response.body.title).toBe('Updated Title');
-      expect(response.body.completed).toBe(true);
-    });
-
-    it('should return 404 when updating non-existent task', async () => {
-      // ARRANGE
-      const fakeId = new mongoose.Types.ObjectId();
-
-      // ACT
-      const response = await request(app)
-        .put(`/api/tasks/${fakeId}`)
-        .send({ title: 'Updated' });
-
-      // ASSERT
-      expect(response.status).toBe(404);
-    });
+    expect(res.status).toBe(201);
+    expect(res.body.status).toBe('pending');
   });
 
-  // TEST 5: DELETE /api/tasks/:id - Eliminar tarea
-  describe('DELETE /api/tasks/:id', () => {
-    it('should delete task successfully', async () => {
-      // ARRANGE
-      const task = await Task.create({
-        title: 'Task to delete',
-        description: 'Will be deleted'
-      });
-
-      // ACT
-      const response = await request(app).delete(`/api/tasks/${task._id}`);
-
-      // ASSERT
-      expect(response.status).toBe(204);
-      
-      // Verificar que realmente se eliminó
-      const deletedTask = await Task.findById(task._id);
-      expect(deletedTask).toBeNull();
-    });
-
-    it('should return 404 when deleting non-existent task', async () => {
-      // ARRANGE
-      const fakeId = new mongoose.Types.ObjectId();
-
-      // ACT
-      const response = await request(app).delete(`/api/tasks/${fakeId}`);
-
-      // ASSERT
-      expect(response.status).toBe(404);
-    });
+  // -------------------------------------------
+  // VALIDACIÓN → título requerido
+  // -------------------------------------------
+  it('POST /api/tasks → fails when title missing', async () => {
+    const res = await request(app).post('/api/tasks').send({ description: 'no title' });
+    expect(res.status).toBe(400);
+    expect(res.body.error).toBe('El título es requerido');
   });
 
-  // TEST 6: Healthcheck
-  describe('GET /healthz', () => {
-    it('should return health status', async () => {
-      // ACT
-      const response = await request(app).get('/healthz');
+  // -------------------------------------------
+  // GET BY ID
+  // -------------------------------------------
+  it('GET /api/tasks/:id → returns task', async () => {
+    const t = await Task.create({ title: 'Test' });
 
-      // ASSERT
-      expect(response.status).toBe(200);
-      expect(response.body.status).toBe('OK');
-      expect(response.body.db).toBe('connected');
-    });
+    const res = await request(app).get(`/api/tasks/${t._id}`);
+
+    expect(res.status).toBe(200);
+    expect(res.body.title).toBe('Test');
   });
+
+  // -------------------------------------------
+  // GET BY ID INVALID
+  // -------------------------------------------
+  it('GET /api/tasks/:id → 404 when not found', async () => {
+    const fakeId = new mongoose.Types.ObjectId();
+    const res = await request(app).get(`/api/tasks/${fakeId}`);
+    expect(res.status).toBe(404);
+    expect(res.body.error).toBe('Tarea no encontrada');
+  });
+
+  // -------------------------------------------
+  // UPDATE GENERAL
+  // -------------------------------------------
+  it('PUT /api/tasks/:id → updates title, priority, dueDate, status', async () => {
+    const task = await Task.create({ title: 'Viejo', priority: 'low' });
+
+    const updates = {
+      title: 'Nuevo',
+      priority: 'high',
+      status: 'completed',
+      dueDate: '2030-05-10'
+    };
+
+    const res = await request(app)
+      .put(`/api/tasks/${task._id}`)
+      .send(updates);
+
+    expect(res.status).toBe(200);
+    expect(res.body.title).toBe('Nuevo');
+    expect(res.body.priority).toBe('high');
+    expect(res.body.status).toBe('completed');
+    expect(new Date(res.body.dueDate)).toEqual(new Date('2030-05-10'));
+  });
+
+  // -------------------------------------------
+  // UPDATE NO EXISTE
+  // -------------------------------------------
+  it('PUT /api/tasks/:id → 404 when updating non-existent task', async () => {
+    const fakeId = new mongoose.Types.ObjectId();
+    const res = await request(app).put(`/api/tasks/${fakeId}`).send({ title: 'New' });
+    expect(res.status).toBe(404);
+  });
+
+  // -------------------------------------------
+  // DELETE
+  // -------------------------------------------
+  it('DELETE /api/tasks/:id → deletes task', async () => {
+    const t = await Task.create({ title: 'Borrar' });
+
+    const res = await request(app).delete(`/api/tasks/${t._id}`);
+    expect(res.status).toBe(204);
+
+    const check = await Task.findById(t._id);
+    expect(check).toBeNull();
+  });
+
+  // -------------------------------------------
+  // DELETE NO EXISTE
+  // -------------------------------------------
+  it('DELETE /api/tasks/:id → 404 when not found', async () => {
+    const fakeId = new mongoose.Types.ObjectId();
+    const res = await request(app).delete(`/api/tasks/${fakeId}`);
+    expect(res.status).toBe(404);
+  });
+
+
+
+  // -------------------------------------------
+  // SEARCH
+  // -------------------------------------------
+  it('GET /api/tasks?search=word → should filter tasks', async () => {
+    await Task.create([
+      { title: 'Comprar leche' },
+      { title: 'Estudiar ingeniería' },
+      { title: 'Hacer ejercicio' }
+    ]);
+
+    const res = await request(app).get('/api/tasks?search=estudiar');
+
+    expect(res.status).toBe(200);
+    expect(res.body).toHaveLength(1);
+    expect(res.body[0].title).toBe('Estudiar ingeniería');
+  });
+
+  // -------------------------------------------
+  // FILTER BY PRIORITY
+  // -------------------------------------------
+  it('GET /api/tasks?priority=high → returns only high priority', async () => {
+    await Task.create([
+      { title: 'A', priority: 'low' },
+      { title: 'B', priority: 'high' },
+      { title: 'C', priority: 'high' }
+    ]);
+
+    const res = await request(app).get('/api/tasks?priority=high');
+
+    expect(res.status).toBe(200);
+    expect(res.body).toHaveLength(2);
+    const priorities = res.body.map(t => t.priority);
+    expect(priorities).toEqual(['high', 'high']);
+  });
+
+  // -------------------------------------------
+  // FILTER BY STATUS
+  // -------------------------------------------
+  it('GET /api/tasks?status=completed → returns only completed tasks', async () => {
+    await Task.create([
+      { title: 'A', status: 'pending' },
+      { title: 'B', status: 'completed' },
+      { title: 'C', status: 'completed' }
+    ]);
+
+    const res = await request(app).get('/api/tasks?status=completed');
+
+    expect(res.status).toBe(200);
+    expect(res.body).toHaveLength(2);
+  });
+
+  // -------------------------------------------
+  // UPDATE STATUS SOLO
+  // -------------------------------------------
+  it('PUT /api/tasks/:id/status → updates status', async () => {
+    const task = await Task.create({ title: 'Cambiar estado', status: 'pending' });
+
+    const res = await request(app)
+      .put(`/api/tasks/${task._id}/status`)
+      .send({ status: 'cancelled' });
+
+    expect(res.status).toBe(200);
+    expect(res.body.status).toBe('cancelled');
+  });
+
+  // -------------------------------------------
+  // STATS
+  // -------------------------------------------
+  it('GET /api/tasks/stats → returns correct counters', async () => {
+    await Task.create([
+      { title: 'A', status: 'pending' },
+      { title: 'B', status: 'completed' },
+      { title: 'C', status: 'completed' },
+      { title: 'D', status: 'cancelled' }
+    ]);
+
+    const res = await request(app).get('/api/tasks/stats');
+
+    expect(res.status).toBe(200);
+    expect(res.body.total).toBe(4);
+    expect(res.body.pending).toBe(1);
+    expect(res.body.completed).toBe(2);
+    expect(res.body.cancelled).toBe(1);
+  });
+
+  // -------------------------------------------
+  // HEALTHCHECK
+  // -------------------------------------------
+  it('GET /healthz → should return OK', async () => {
+    const res = await request(app).get('/healthz');
+    expect(res.status).toBe(200);
+    expect(res.body.status).toBe('OK');
+    expect(res.body.db).toBe('connected');
+  });
+
 });
