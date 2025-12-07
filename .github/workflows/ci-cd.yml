@@ -117,7 +117,7 @@ jobs:
     runs-on: ubuntu-latest
     environment:
       name: production      # << esto aparece como "production" en Deployments
-      url: https://tp8-frontend-prod.onrender.com
+      url: https://tp8-frontend-prod-xy1z.onrender.com
 
     steps:
       - uses: actions/checkout@v4
