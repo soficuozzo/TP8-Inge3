@@ -35,7 +35,7 @@ describe('API Tasks - CRUD + NEW FEATURES', () => {
   it('GET /api/tasks → should return empty array', async () => {
     const response = await request(app).get('/api/tasks');
     expect(response.status).toBe(200);
-    expect(response.body).toEqual([]);
+    expect(response.body).toEqual([{ wrong: true }]);
   });
 
   // -------------------------------------------
