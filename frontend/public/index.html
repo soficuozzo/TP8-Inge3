@@ -447,9 +447,10 @@
         }
 
         // PROD en Render
-        if (hostname.includes('tp8-frontend-prod')) {
+        if (hostname.includes('tp8-frontend-prod-xy1z')) {
             return 'https://tp8-backend-prod-8pd2.onrender.com/api/tasks';
-        }
+    }
+
 
         // Fallback
         return 'http://localhost:8080/api/tasks';
